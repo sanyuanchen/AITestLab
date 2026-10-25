@@ -186,6 +186,8 @@ cd frontend/qualitypilot-web && npm run dev
 - 知识库默认使用稳定可演示的关键词检索，向量库接口已预留
 - UI 自动化当前为 dry-run adapter，只输出执行计划
 - Allure HTML 报告需本机安装 Allure CLI；CI 中由 artifact 提供
+- CI 工作流配置暂存于 `docs/ci/github-actions-ci.yml`，复制回 `.github/workflows/`
+  即可启用（首次推送所用凭据缺少 GitHub 要求的 `workflow` 权限）
 
 ## 来源与许可
 
