@@ -1,0 +1,153 @@
+# Interview Guide
+
+本文档用于准备测试开发岗位面试，重点说明这个项目应该怎么讲、怎么演示，以及面试官追问时如何回答。
+
+## 1 分钟项目介绍
+
+这是一个面向测试开发场景的 AI 驱动自动化测试平台。项目基于 RAG 和 MCP 架构改造，核心闭环是：输入需求或接口说明，系统结合需求文档、API 文档、缺陷记录、测试规范和执行日志生成测试点草稿；再用规则评审检查测试点是否可执行、维度是否完整、依据是否清楚；再用追踪矩阵把需求、测试点、自动化场景和最近执行状态串起来；再用 Golden Test Set 评估生成质量；自动化侧内置 API 和 UI 场景，能输出 JUnit / Allure 兼容报告；执行层支持自然语言步骤解析，并接入 API HTTP adapter 与 Browser UI adapter。
+
+## 推荐演示顺序
+
+1. 打开 Dashboard：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\start_dashboard.py --port 8501
+```
+
+2. 进入 `测试工作台`，输入一段需求，例如：
+
+```text
+登录接口需要支持用户名密码认证，连续五次失败后临时锁定账户，并且错误提示不能泄露账号是否存在。
+```
+
+选择 `接口测试设计`，关注 `功能 / 异常 / 安全 / 回归`，生成测试点草稿。
+
+3. 进入 `测试设计评审`，把生成的 Markdown 放进去，说明平台会检查缺失维度、空泛描述、不可执行断言、弱断言和缺少依据，并给出风险等级与修改建议。
+
+4. 进入 `追踪矩阵`，说明平台会把需求项拆出来，并匹配生成的测试点、自动化场景和最近执行状态。这里可以回答“每条需求有没有测试覆盖、有没有自动化、最近跑没跑过、缺口在哪里”。同时可以给每条需求标记评审状态，并导出 Markdown 或 CSV 作为评审材料。
+
+5. 进入 `自动化场景`，说明平台内置了 API 登录、API 文件上传、UI 登录冒烟，不是只支持单一 demo。
+
+6. 运行自动化场景：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_automation_suite.py --scenario all --disable-allure
+```
+
+7. 进入 `测试报告`，查看 `reports/junit.xml` 的汇总。
+
+8. 进入 `执行计划`，选择 API 登录场景或 UI 登录冒烟场景，生成计划，说明自然语言步骤会变成结构化 action。
+
+9. 执行计划也可以导出成 JUnit XML：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\run_execution_plan.py --scenario api_login --dry-run --junitxml reports\execution-plan-junit.xml
+.\.venv\Scripts\python.exe scripts\run_execution_plan.py --scenario ui_login_smoke --adapter browser --dry-run --junitxml reports\execution-plan-junit.xml --allure-results reports\execution-plan-allure-results
+```
+
+10. 打开 GitHub Actions，说明每次 push/PR 会自动跑核心回归，并上传 `ai-test-platform-reports` 和 `allure-html-report` 两类 artifact。
+
+11. 进入 `执行历史`，查看保存过的执行计划记录、通过率趋势、状态分布、失败原因、报告路径和截图 artifact。
+
+12. 进入 `测试设计评估`，点击运行 Golden Test Set，展示需求覆盖率、维度覆盖率、引用覆盖率和空输出指标。也可以用 CLI 运行：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_test_design.py
+```
+
+说明这个项目不是只看 AI 输出好不好，而是用固定样例做质量回归，并且评估结果可以直接在 Dashboard 中展示。
+
+13. 如果面试官问“项目里怎么体现测试用例、自动化测试和性能测试”，可以打开 [docs/interview_testing_answers.md](interview_testing_answers.md) 按章节回答。
+
+## 可以重点讲的设计
+
+### RAG 为什么适合测试设计
+
+测试设计依赖大量上下文：需求、接口约束、历史缺陷、测试规范、执行失败记录。单纯模板生成容易漏掉历史风险点。RAG 可以把这些资料作为证据召回，生成测试点时带上依据，测试人员可以复核来源。
+
+### 为什么要做知识源分类
+
+同样是一个检索片段，来自需求、API 文档、缺陷记录、测试规范和执行日志的可信度和用途不同。项目里把来源类型标准化，页面和 Markdown 草稿都会展示来源类型，方便判断这是规则依据、历史风险还是执行反馈。
+
+### 为什么要做 Golden Test Set
+
+AI 生成质量不能只靠肉眼感觉。项目用固定需求样例评估：
+
+- requirement coverage：期望关键词是否覆盖；
+- dimension coverage：功能、边界、异常、安全、回归等维度是否覆盖；
+- citation coverage：应该引用的证据是否出现；
+- non-empty output：是否出现空输出。
+
+这些指标虽然简单，但足够作为第一版回归基线。项目现在同时提供 CLI 和 Dashboard 页面，便于本地回归和面试演示。
+
+### 为什么要做测试设计评审
+
+Golden Test Set 更适合做回归基线，但面试和真实工作里还需要判断单个测试设计草稿能不能落地执行。所以项目加了规则评审：检查是否缺功能、边界、异常、安全、回归等维度；检查有没有“功能是否正常”“体验良好”这种空泛描述；检查断言是不是能自动化验证；检查有没有需求或接口依据。这样能把 AI 生成的草稿从“看起来像测试用例”推进到“测试人员可以继续补充和执行”。
+
+### 为什么要做追踪矩阵
+
+面试官经常会问“你的测试用例覆盖了哪些需求，哪些已经自动化，执行结果是什么”。只展示测试点或测试报告是不够的，因为两者之间缺少关系。追踪矩阵把需求项、测试点、自动化场景和最近执行记录放到同一行里，能直接看出覆盖率、自动化率、最近通过率和缺口，比如缺少测试设计、没有自动化、只做了 dry-run 或最近执行失败。现在矩阵还支持人工评审状态和 Markdown / CSV 导出，可以把页面结果变成评审材料。
+
+### 为什么 Browser adapter 默认先用 dry-run
+
+真实 UI 执行依赖浏览器安装、页面环境和选择器稳定性，面试演示时不应该把核心链路绑死在本机浏览器环境上。所以项目把 Browser adapter 做成两层：dry-run 可稳定展示自然语言步骤到执行结果的链路；安装 Playwright 后可以进入真实浏览器执行，并在失败时输出截图路径。这样既能讲架构，也能避免 demo 不稳定。
+
+### 报告中心的价值
+
+测试开发不只是写脚本，还要看执行质量。项目的报告中心能解析 JUnit XML，并发现 Allure results / Allure report 目录。自动化场景和执行计划 adapter 都可以产生 JUnit XML；执行计划结果还能生成最小 Allure results，并通过脚本或 CI 生成静态 Allure HTML 报告，这样可以把自动化执行、自然语言执行计划和测试报告展示串起来，面试时能讲完整链路。
+
+### 为什么要有执行历史
+
+自动化测试平台不能只展示“刚刚跑了一次”的结果，还要能回答什么时候跑过、跑的哪个场景、失败原因是什么、报告和截图在哪里。当前版本用 JSONL 存储轻量执行记录，并从历史记录里计算通过率、失败率、dry-run 比例、adapter 分布和失败原因 Top N；后续可以自然升级成数据库任务表、趋势分析和定时任务。
+
+### CI/CD 怎么讲
+
+当前完成的是 CI，也就是持续集成：push 或 pull request 后由 GitHub Actions 自动安装依赖、运行核心回归、生成 JUnit XML、Allure results 和 Allure HTML artifact。CD 暂时没有做，因为这个面试项目还不需要自动部署 Dashboard；后续可以把 Streamlit 演示环境发布出去。
+
+## 高频追问与回答
+
+### 这个项目和普通自动化测试框架有什么区别？
+
+普通框架侧重执行脚本，这个项目把测试设计也纳入平台：需求输入、知识检索、测试点生成、质量评估、自动化执行和报告查看都在一个闭环里。它更像智能测试工作台，而不只是 pytest 脚本集合。
+
+### RAG 部分怎么落到测试开发？
+
+把 PRD、接口文档、历史缺陷、测试规范、执行日志入库。生成测试点时，先检索相关资料，再把证据片段附加到测试设计草稿中。比如登录需求会召回认证 API 文档、历史锁定缺陷和错误码规范，从而补充安全、异常和回归测试点。
+
+### 怎么证明 AI 生成结果可靠？
+
+第一版用 deterministic Golden Test Set 做回归，指标包括需求覆盖、维度覆盖、引用覆盖和空输出。未来可以继续加重复率、不可执行断言、风险覆盖、人工评审通过率等指标。
+
+### 为什么当前不是完整企业级平台？
+
+这是面试导向的工程原型，目标是讲清楚核心技术闭环。企业级平台还需要用户权限、项目空间、用例管理、任务调度、CI 集成、环境管理等能力，这些不是第一版重点。
+
+### 如果继续扩展，你会先做什么？
+
+下一步我会优先给追踪矩阵增加本地持久化，把人工确认状态和评审备注保存下来。之后可以补轻量性能基线，比如 RAG 检索、报告解析、执行历史趋势聚合的耗时统计，再接 MCP browser 工具或真实业务测试站点。
+
+## 简历写法参考
+
+可以按下面方式写，注意要结合自己的真实掌握程度调整：
+
+```text
+AI 驱动的自动化测试平台
+- 基于 Python、Streamlit、pytest、RAG 和 MCP 设计测试开发工作台，串联需求输入、知识检索、测试点生成、自动化执行、报告展示与质量评估链路。
+- 构建测试知识源分类能力，将需求文档、API 文档、缺陷记录、测试规范和执行日志标准化展示，提升测试设计依据可追溯性。
+- 实现测试设计规则评审，识别缺失维度、空泛描述、不可执行断言、弱断言和缺少依据的问题，输出风险等级与修改建议。
+- 构建需求-测试点-执行结果追踪矩阵，将需求项关联到测试设计、自动化场景和最近执行历史，展示覆盖率、自动化率、通过率和缺口，支持人工评审状态与 Markdown / CSV 导出。
+- 实现测试设计 Golden Test Set 评估，计算需求覆盖率、维度覆盖率、引用覆盖率和空输出指标，支持生成逻辑的稳定回归。
+- 内置 API 登录、文件上传和 UI 登录冒烟自动化场景，支持 pytest 执行、JUnit XML 输出、Allure results 和 Allure HTML artifact。
+- 设计自然语言执行计划解析与 API HTTP / Browser UI adapter，支持 dry-run、真实 HTTP 执行、可选 Playwright UI 执行、步骤日志、响应预览、失败截图和失败原因记录。
+- 将执行适配器结果转换为 JUnit XML / Allure results，使自然语言执行计划结果能进入统一测试报告中心展示。
+- 接入 GitHub Actions CI，在 push/PR 后自动运行核心回归并上传测试报告 artifact，提升项目交付可信度。
+- 增加执行历史记录和质量趋势，保存场景、状态、失败原因、报告路径和截图 artifact，让平台具备测试任务追踪和质量分析能力。
+```
+
+## 不建议夸大的点
+
+- 不要说这是完整企业级 TestOps 平台。
+- 不要说 UI 真执行不需要环境准备；真实 Browser adapter 需要安装 Playwright 和浏览器依赖，dry-run 可直接演示。
+- 不要说 RAG 检索质量已经在大规模业务数据上验证，当前只完成通用 fixture 和评估框架。
+- 不要说自动化报告已完整集成 Allure 服务端，当前是生成 Allure results，并通过本地脚本或 GitHub Actions 生成静态 Allure HTML artifact。
+- 不要说已经完成 CD 自动部署，当前完成的是 GitHub Actions 持续集成和报告 artifact。

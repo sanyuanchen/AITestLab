@@ -1,0 +1,7 @@
+# Windows launcher scripts must keep CRLF line endings,
+# otherwise cmd.exe mis-parses labels and goto targets.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Shell scripts keep LF
+*.sh text eol=lf

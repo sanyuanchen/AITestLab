@@ -1,0 +1,49 @@
+AITestLab — 来源与许可说明
+============================
+
+本项目（AITestLab）是基于下述开源项目的二次开发版本。此文件的目的是明确
+代码来源、原始授权与本地修改范围，保留上游作者的署名。
+
+一、上游项目
+------------
+  名称    : QualityPilot — 基于 MCP + RAG 的智能测试自动化平台
+  仓库    : https://github.com/leo159363/AI-driven-test-automation-platform
+  分叉基点: e723f71e6025269650d432ae4c8f8cc5140ff2a1
+            ("fix: stabilize dev server and tour close", 2026-05-27)
+  提交作者: 13080180580 <13080180580@163.com>
+  许可证  : MIT
+
+说明：上游仓库未附带 LICENSE 文件，但其 pyproject.toml 中声明了
+
+    license = { text = "MIT" }
+    classifiers = [..., "License :: OSI Approved :: MIT License", ...]
+
+本仓库据此按 MIT 条款使用上游代码，并保留全部原始提交历史以便追溯。
+
+二、权利归属
+------------
+  * 上游原始代码的著作权归上游作者所有。
+  * 本仓库中新增与修改部分的著作权归 Yolanda Chen（GitHub: @sanyuanchen）所有。
+  * 本仓库整体以 MIT 许可证发布，全文见 LICENSE。
+
+三、本仓库相对上游的修改
+------------------------
+  （随迭代持续更新，最新修改见 git log）
+
+  工程化
+    - 新增 Windows 一键启动：start_qualitypilot.bat / stop_qualitypilot.bat
+      以及 run_api.cmd / run_web.cmd，解决本机默认浏览器关联损坏、
+      PATH 中 node 缺失等环境问题，启动过程写日志到 logs/
+    - 新增启动器图标与桌面快捷方式生成脚本（scripts/make_launcher_icon.py、
+      scripts/make_desktop_shortcut.py）
+    - 重写 README，补充架构说明、快速开始与改造路线
+    - 补充 LICENSE / NOTICE 合规文件
+
+  （后续功能层面的改造将在本文件中持续登记）
+
+四、如何标注引用
+----------------
+  若你在自己的文章、汇报或项目中引用本项目，请注明：
+
+    AITestLab — https://github.com/sanyuanchen/AITestLab
+    （基于 leo159363/AI-driven-test-automation-platform，MIT）
