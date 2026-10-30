@@ -1,6 +1,6 @@
 # AITestLab
 
-> 基于 **MCP + RAG** 的智能测试自动化平台：把需求文档、接口文档、历史 Bug、测试报告沉淀成测试知识库，
+> 基于 MCP + RAG 的 AI 测试自动化平台：从需求文档自动生成测试用例与 Playwright 脚本，支持知识库检索增强，开箱即用的 MCP Server 实现。
 > 再让 AI 基于检索到的上下文做用例生成、接口测试设计、执行失败分析与 Bug 报告。
 
 [![backend](https://img.shields.io/badge/backend-FastAPI-009688)](https://fastapi.tiangolo.com/)
